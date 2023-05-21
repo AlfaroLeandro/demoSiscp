@@ -1,5 +1,22 @@
 package com.example.demo;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.layers.DenseLayer;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.learning.config.Adam;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -50,5 +67,75 @@ public class MainController {
 	public String helloWorld(Model model) {
 		model.addAttribute("message", "Hello World!");
 		return "hello-world";
+	}
+	
+	@GetMapping("/ml")
+	public @ResponseBody String ml() {
+		MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
+			    .seed(123) // Semilla para reproducibilidad
+			    .weightInit(WeightInit.XAVIER) // Inicialización de pesos
+			    .activation(Activation.RELU) // Función de activación de las capas ocultas
+			    .updater(new Adam()) // Optimizador Adam
+			    .list()
+			    .layer(new DenseLayer.Builder()
+			        .nIn(2) // Número de entradas
+			        .nOut(32) // Número de neuronas en la capa oculta
+			        .build())
+			    .layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+			        .nIn(32) // Número de entradas de la capa de salida
+			        .nOut(2) // Número de salidas
+			        .activation(Activation.IDENTITY) // Función de activación de la capa de salida
+			        .build())
+			    .build();
+		
+		List<INDArray> trazas = obtenerTrazasDeCoordenadas();
+//		INDArray trazasConcatenadas = Nd4j.concat(1, trazas.toArray(new INDArray[0]));
+//		INDArray trazasConcatenadas = Nd4j.stack(trazas.size(), trazas.toArray(new INDArray[0]));
+		
+		// Crear la instancia del modelo
+		MultiLayerNetwork model = new MultiLayerNetwork(config);
+		model.init();
+		
+//		DataSet dataset = new DataSet(trazasConcatenadas);
+		
+		int batchSize = 16;
+		// Entrenar el modelo
+		for(int i = 0; i<trazas.size(); i++) {
+			DataSet dataSet = new DataSet(trazas.get(i), trazas.get(i));
+			ListDataSetIterator trainIterator = new ListDataSetIterator(dataSet.asList(), batchSize);
+			model.fit(trainIterator);
+		}
+		INDArray coordenada = Nd4j.create(1,2).putScalar(0, 0, 2.37).putScalar(0, 1, 1.447);
+		var resultado = model.output(coordenada);
+		
+		System.out.println("Prediccion: " + resultado); 
+		
+		return resultado.toString();
+	}
+
+	private List<INDArray> obtenerTrazasDeCoordenadas() {
+		List<INDArray> trazas = new ArrayList<>();
+		// Supongamos que tienes un conjunto de trazas en forma de lista de listas de listas
+		List<List<List<Double>>> conjuntoTrazas = Arrays.asList(
+		        Arrays.asList(
+		                Arrays.asList(1.0, 2.0),
+		                Arrays.asList(3.0, 4.0)
+		        ),
+		        Arrays.asList(
+		                Arrays.asList(2.0, 3.0),
+		                Arrays.asList(3.0, 4.0)
+		        )
+		);
+		
+		for(List<List<Double>> traza : conjuntoTrazas) {
+			INDArray indTraza = Nd4j.create(traza.size(), 2);
+			for(int i = 0; i<traza.size(); i++) {
+				indTraza.putScalar(i, 0, traza.get(i).get(0)); //pongo la latitud
+				indTraza.putScalar(i, 1, traza.get(i).get(1)); //pongo la longitud
+			}
+			trazas.add(indTraza);
+		}
+		
+		return trazas;
 	}
 }
