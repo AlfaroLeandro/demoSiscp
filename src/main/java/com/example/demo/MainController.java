@@ -1,16 +1,23 @@
 package com.example.demo;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
+import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.nd4j.common.io.ClassPathResource;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
@@ -137,5 +144,27 @@ public class MainController {
 		}
 		
 		return trazas;
+	}
+	
+	@GetMapping("/h5")
+	public @ResponseBody String h5() throws IOException, InvalidKerasConfigurationException, UnsupportedKerasConfigurationException {
+//		new File("src/main/resources/static/nn/modelo160623.json").getAbsolutePath();
+		
+		
+//		String modelJson = new ClassPathResource("static/nn/modelo160623.json").getFile().getPath();
+		String simpleMlp  = new ClassPathResource("static/nn/modelo.h5").getFile().getPath();
+		MultiLayerNetwork model = KerasModelImport.importKerasSequentialModelAndWeights(simpleMlp);
+//		ComputationGraphConfiguration modelConfig = KerasModelImport.importKerasModelConfiguration(simpleMlp);
+		
+//		String jsonConfig = "src/main/resources/static/nn/modelo160623.json";
+//		MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(jsonConfig);
+//		
+//		String jsonWeights = "src/main/resources/static/nn/pesos160623.h5";
+//		model.init();
+//		model = ModelSerializer.restoreMultiLayerNetwork(jsonWeights);
+//		ModelSerializer.restoreMultiLayerNetworkWeights(new File(jsonWeights), model);
+//		MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork("src/main/resources/static/nn/modeloreluañadido3601.h5");
+		
+		return "cargo";
 	}
 }
